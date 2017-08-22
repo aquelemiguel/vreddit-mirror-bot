@@ -3,8 +3,12 @@ import configparser
 import sys
 import praw
 import json
+import urllib.request
+import ffmpy
+
 from gfycat.client import GfycatClient
 from gfycat.error import GfycatClientError
+from imgurpython import ImgurClient
 
 # ConfigParser setup.
 config = configparser.ConfigParser()
@@ -18,9 +22,25 @@ reddit = praw.Reddit(
     user_agent='vredditmirrorbot by /u/blinkroot'
 )
 
-gfycat = GfycatClient()
+'''
+imgur = ImgurClient(config.get('imgur', 'client_id'), config.get('imgur', 'client_secret'))
+#urllib.request.urlretrieve('https://v.redd.it/d5vdyq8qv9hz/DASH_9_6_M', 'video.mp4')
+#ff = ffmpy.FFmpeg(inputs={'video.mp4': None}, outputs={'out.gif': None})
+#ff.run()
 
-#print(gfycat.upload_from_url('https://v.redd.it/d5vdyq8qv9hz/DASH_9_6_M'))
+print("done")
+#i = imgur.upload_from_path('out.gif')
+i = gfycat.upload_from_file('video.mp4')
+print("done2")
+print(i)
+
+sys.exit()
+'''
+
+gfycat = GfycatClient()
+#json_gfy = gfycat.query_gfy(gfycat.upload_from_url('https://v.redd.it/d5vdyq8qv9hz/DASH_9_6_M')['gfyname'])
+#print(json_gfy)
+#print(gfycat.upload_from_file('video.mp4'))
 #sys.exit()
 
 for submission in reddit.subreddit('all').stream.submissions():
@@ -33,7 +53,7 @@ for submission in reddit.subreddit('all').stream.submissions():
         # Attempts to upload three times, while gfycat doesn't fix their shit.
         for i in range(0, 3):
             try:
-                gif_json = gfycat.upload_from_url(media_url)
+                gif_json = gfycat.query_gfy(gfycat.upload_from_url(media_url)['gfyname'])
                 break
             except GfycatClientError:
                 print("Encoding errors...")
@@ -46,7 +66,7 @@ for submission in reddit.subreddit('all').stream.submissions():
 
         line1 = "This post appears to be using Reddit's own video player.  \n"
         line2 = "If your current device does not support v.redd.it, try this mirror!  \n\n"
-        line3 = "* [**Desktop** (Gfycat)](" + gif_json['webmUrl'] + ")  \n* [**Mobile** (Gfycat)](" + gif_json['mobileUrl'] + ")  \n\n***\n"
+        line3 = "* [**Desktop** (Gfycat)](" + gif_json['webmUrl'] + ")  \n* [**Mobile** (Gfycat)](" + gif_json['webpUrl'] + ")  \n\n***\n"
         line4 = "^(i'm a beepboop made by /u/blinkroot.) ^(pm him for suggestions and issues. )^[github.](https://github.com/aquelemiguel) ^[donate!](https://www.paypal.me/aquelemiguel/)"
 
         while True:
