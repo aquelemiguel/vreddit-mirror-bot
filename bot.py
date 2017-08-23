@@ -3,12 +3,9 @@ import configparser
 import sys
 import praw
 import json
-import urllib.request
-import ffmpy
-
+import threading
 from gfycat.client import GfycatClient
 from gfycat.error import GfycatClientError
-from imgurpython import ImgurClient
 
 # ConfigParser setup.
 config = configparser.ConfigParser()
@@ -25,31 +22,40 @@ reddit = praw.Reddit(
 gfycat = GfycatClient()
 
 for submission in reddit.subreddit('all').stream.submissions():
-    if submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif']:
-        print("Match found: " + submission.url)
 
+    # Avoids sudden 'None' objects crawling in.
+    if submission == None:
+        continue
+
+    elif submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif']:
+
+        print("Match found: " + submission.url)
         media_url = submission.media['reddit_video']['fallback_url']
         gif_json = {}
 
-        # Attempts to upload three times, while gfycat doesn't fix their shit.
-        for i in range(0, 3):
-            try:
-                gif_json = gfycat.query_gfy(gfycat.upload_from_url(media_url)['gfyname'])
-                break
-            except GfycatClientError:
-                print("Encoding errors...")
-                time.sleep(30)
-
-        # Checks whether the upload was successful.
-        if gif_json == {}:
-            print("Ignoring: " + submission.url)
+        # Attempts to upload. Gfycat's API doesn't cooperate, sometimes.
+        try:
+            gif_json = gfycat.query_gfy(gfycat.upload_from_url(media_url)['gfyname'])
+        except GfycatClientError:
+            print("Ignoring: " + submission.url + "\n")
             continue
+
+        # Confirms that the converted URL matches the provided.
+        if not gif_json['gfyItem']['url'] == media_url:
+            print(gif_json['gfyItem']['url'] + " doesn't match " + media_url + " on post " + submission.url + "\n")
+            continue
+
+        # Increment 'conversions' stat in .ini file.
+        config.set('stats', 'conversions', str(int(config.get('stats', 'conversions')) + 1))
+        with open('config.ini', 'w') as config_file:
+            config.write(config_file)
+            config_file.close()
 
         # TODO: Find a better place for this mess.
         line1 = "This post appears to be using Reddit's own video player.  \n"
         line2 = "If your current device does not support v.redd.it, try these mirrors hosted over at Gfycat!  \n\n"
         line3 = "* [**Desktop** (.webm)](" + gif_json['gfyItem']['webmUrl'] + ")  \n* [**Mobile** (.mp4)](" + gif_json['gfyItem']['mobileUrl'] + ")  \n\n***\n"
-        line4 = "^(i'm a beepboop made by /u/blinkroot.) ^(pm him for suggestions and issues. )^[github.](https://github.com/aquelemiguel) ^[donate!](https://www.paypal.me/aquelemiguel/)"
+        line4 = "^(^I'm ^a ^beep-boop ^made ^by ^/u/blinkroot. ^So ^far, ^I've ^converted ^**" + config.get('stats', 'conversions') + "** ^videos!) ^[^github.](https://github.com/aquelemiguel) ^[^donate.](https://www.paypal.me/aquelemiguel/)"
 
         while True:
             try:
