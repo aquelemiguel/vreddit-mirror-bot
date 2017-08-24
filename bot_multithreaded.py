@@ -33,7 +33,6 @@ def cached_links_handler():
 
 # Confirms that the converted URL matches the provided.
 def verify_matching_urls(gif_json, media_url):
-    print("Verifying URLs...")
     if not gif_json['gfyItem']['url'] == media_url:
         print(gif_json['gfyItem']['url'] + " doesn't match " + media_url + " on post " + submission.url + "\n")
         return False
@@ -41,20 +40,16 @@ def verify_matching_urls(gif_json, media_url):
 
 # Increment 'conversions' stat in .ini file.
 def update_conversions_ini():
-    print("Updating .ini file...")
-
     config.set('stats', 'conversions', str(int(config.get('stats', 'conversions')) + 1))
     with open('config.ini', 'w') as config_file:
         config.write(config_file)
-        config_file.close()
 
 def reply_to_submission(submission, gif_json):
-    print("Replying...")
 
     # TODO: Find a better place for this mess.
     line1 = "This post appears to be using Reddit's own video player.  \n"
     line2 = "If your current device does not support v.redd.it, try these mirrors hosted over at Gfycat!  \n\n"
-    line3 = "* [**Desktop** (.webm)](" + gif_json['gfyItem']['webmUrl'] + ")  \n\n* [**Mobile** (.mp4)](" + gif_json['gfyItem']['mobileUrl'] + ")  \n\n***\n"
+    line3 = "* [**WEBM** (" + str(round(int(gif_json['gfyItem']['webmSize'])/1000000, 2)) + " MB)](" + gif_json['gfyItem']['webmUrl'] + ")  \n\n* [**MP4** (" + str(round(int(gif_json['gfyItem']['mp4Size'])/1000000, 2))  + " MB)](" + gif_json['gfyItem']['mp4Url'] + ")  \n\n***\n"
     line4 = "^(^I'm ^a ^beep-boop ^made ^by ^/u/blinkroot. ^So ^far, ^I've ^converted ^**" + config.get('stats', 'conversions') + "** ^videos!) [^^github. ](https://github.com/aquelemiguel) [^^help ^^me ^^stay ^^online.](https://www.paypal.me/aquelemiguel/)"
 
     while True:
@@ -66,6 +61,9 @@ def reply_to_submission(submission, gif_json):
             print("Hit rate limit: " + e.message)
             time.sleep(30)
             continue
+        except praw.exceptions.Forbidden as e:
+            print("Wasn't able to comment on: " + submission.url)
+            break
 
 def upload_to_gfycat(submission):
     media_url = submission.media['reddit_video']['fallback_url']
@@ -81,6 +79,7 @@ def upload_to_gfycat(submission):
         return 'remove'
 
     update_conversions_ini()
+
     reply_to_submission(submission, gif_json)
     return 'remove'
 

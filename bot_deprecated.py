@@ -8,7 +8,6 @@ from gfycat.client import GfycatClient
 from gfycat.error import GfycatClientError
 
 # ConfigParser setup.
-config = configparser.ConfigParser()
 config.read('config.ini')
 
 reddit = praw.Reddit(
@@ -19,6 +18,10 @@ reddit = praw.Reddit(
     user_agent='vredditmirrorbot by /u/blinkroot'
 )
 gfycat = GfycatClient()
+
+s = gfycat.query_gfy(gfycat.upload_from_url('https://v.redd.it/qhnd50meeohz/DASH_9_6_M')['gfyname'])
+print(str(s['gfyItem']))
+sys.exit()
 
 for submission in reddit.subreddit('all').stream.submissions():
 
