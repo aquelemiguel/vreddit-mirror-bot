@@ -18,7 +18,6 @@ reddit = praw.Reddit(
     password=config.get('reddit', 'password'),
     user_agent='vredditmirrorbot by /u/blinkroot'
 )
-
 gfycat = GfycatClient()
 
 for submission in reddit.subreddit('all').stream.submissions():
@@ -31,13 +30,13 @@ for submission in reddit.subreddit('all').stream.submissions():
 
         print("Match found: " + submission.url)
         media_url = submission.media['reddit_video']['fallback_url']
-        gif_json = {}
 
         # Attempts to upload. Gfycat's API doesn't cooperate, sometimes.
         try:
             gif_json = gfycat.query_gfy(gfycat.upload_from_url(media_url)['gfyname'])
         except GfycatClientError:
-            print("Ignoring: " + submission.url + "\n")
+            cached_submissions.append(submission)
+            print("Caching: " + submission.url + "\n")
             continue
 
         # Confirms that the converted URL matches the provided.
@@ -54,13 +53,13 @@ for submission in reddit.subreddit('all').stream.submissions():
         # TODO: Find a better place for this mess.
         line1 = "This post appears to be using Reddit's own video player.  \n"
         line2 = "If your current device does not support v.redd.it, try these mirrors hosted over at Gfycat!  \n\n"
-        line3 = "* [**Desktop** (.webm)](" + gif_json['gfyItem']['webmUrl'] + ")  \n* [**Mobile** (.mp4)](" + gif_json['gfyItem']['mobileUrl'] + ")  \n\n***\n"
-        line4 = "^(^I'm ^a ^beep-boop ^made ^by ^/u/blinkroot. ^So ^far, ^I've ^converted ^**" + config.get('stats', 'conversions') + "** ^videos!) ^[^github.](https://github.com/aquelemiguel) ^[^donate.](https://www.paypal.me/aquelemiguel/)"
+        line3 = "* [**Desktop** (.webm)](" + gif_json['gfyItem']['webmUrl'] + ")  \n\n* [**Mobile** (.mp4)](" + gif_json['gfyItem']['mobileUrl'] + ")  \n\n***\n"
+        line4 = "^(^I'm ^a ^beep-boop ^made ^by ^/u/blinkroot. ^So ^far, ^I've ^converted ^**" + config.get('stats', 'conversions') + "** ^videos!) [^^github. ](https://github.com/aquelemiguel) [^^help ^^me ^^stay ^^online.](https://www.paypal.me/aquelemiguel/)"
 
         while True:
             try:
                 submission.reply(line1 + line2 + line3 + line4)
-                print("Done!\n")
+                print("Upload complete!\n")
                 break
             except praw.exceptions.APIException as e:
                 print("Hit rate limit: " + e.message)
