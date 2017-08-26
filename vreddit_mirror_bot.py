@@ -44,14 +44,28 @@ def update_conversions_ini():
 def reply_to_submission(submission, gif_json):
 
     # TODO: Find a better place for this mess.
-    line1 = "This post appears to be using Reddit's own video player.  \n"
-    line2 = "If your current device does not support v.redd.it, try these mirrors hosted over at Gfycat!  \n\n"
-    line3 = "* [**WEBM** (" + str(round(int(gif_json['gfyItem']['webmSize'])/1000000, 2)) + " MB)](" + gif_json['gfyItem']['webmUrl'] + ")  \n\n* [**MP4** (" + str(round(int(gif_json['gfyItem']['mp4Size'])/1000000, 2))  + " MB)](" + gif_json['gfyItem']['mp4Url'] + ")  \n\n***\n"
-    line4 = "^(^I'm ^a ^beep-boop ^made ^by ^/u/blinkroot. ^So ^far, ^I've ^converted ^**" + config.get('stats', 'conversions') + "** ^videos!) [^^github. ](https://github.com/aquelemiguel) [^^support ^^me. ^^♥️](https://www.paypal.me/aquelemiguel/)"
+    def gfy_field(prop):
+        return gif_json['gfyItem'][prop]
+
+    webm_size = str(round(int(gfy_field('webmSize'))/1000000, 2))
+    mp4_size = str(round(int(gfy_field('mp4Size'))/1000000, 2))
+
+    webm_url = gfy_field('webmUrl')
+    mp4_url = gfy_field('mp4Url')
+
+    num_of_conversions = config.get('stats', 'conversions')
+
+    reply = f"""\
+            This post appears to be using Reddit's own video player.
+            If your current device does not support v.redd.it, try these mirrors hosted over at Gfycat!  \n
+            * [**WEBM** (${webm_size} MB)](${webm_url})  \n\n* [**MP4** (${mp4_size} MB)](${mp4_url})  \n\n***
+            ^(^I'm ^a ^beep-boop ^made ^by ^/u/blinkroot. ^So ^far, ^I've ^converted ^**${num_of_conversions}** ^videos!)\
+             [^^github. ](https://github.com/aquelemiguel) [^^support ^^me. ^^♥️](https://www.paypal.me/aquelemiguel/)
+            """
 
     while True:
         try:
-            submission.reply(line1 + line2 + line3 + line4)
+            submission.reply(reply)
             print("Upload complete!\n")
             break
         except praw.exceptions.APIException as e:
