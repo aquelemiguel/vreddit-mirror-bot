@@ -106,9 +106,9 @@ while True:
                         print("Bot is banned from " + str(submission.subreddit) + ".")
                         continue
 
-                        print("Match found: " + submission.url)
-                        token = threading.Thread(target=upload_to_gfycat, args=(submission,))
-                        token.start()
+                    print("Match found: " + submission.url)
+                    token = threading.Thread(target=upload_to_gfycat, args=(submission,))
+                    token.start()
 
             except TypeError:
                 print("This submission is NoneType. Dodging...")
