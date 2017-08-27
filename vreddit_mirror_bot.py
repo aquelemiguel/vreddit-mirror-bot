@@ -95,22 +95,23 @@ def upload_to_gfycat(submission):
 
     return
 
-try:
-    for submission in reddit.subreddit('all').stream.submissions():
-        try:
-            if submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif']:
+while True:
+    try:
+        for submission in reddit.subreddit('all').stream.submissions():
+            try:
+                if submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif']:
 
-                # Checks whether bot is banned from this subreddit.
-                if submission.subreddit.user_is_banned:
-                    print("Bot is banned from " + str(submission.subreddit) + ".")
-                    continue
+                    # Checks whether bot is banned from this subreddit.
+                    if submission.subreddit.user_is_banned:
+                        print("Bot is banned from " + str(submission.subreddit) + ".")
+                        continue
 
-                print("Match found: " + submission.url)
-                token = threading.Thread(target=upload_to_gfycat, args=(submission,))
-                token.start()
+                        print("Match found: " + submission.url)
+                        token = threading.Thread(target=upload_to_gfycat, args=(submission,))
+                        token.start()
 
-        except TypeError:
-            print("This submission is NoneType. Dodging...")
-            continue
-except prawcore.exceptions.ServerError:
-    print("Issue on submission stream...")
+            except TypeError:
+                print("This submission is NoneType. Dodging...")
+                continue
+    except prawcore.exceptions.ServerError:
+        print("Issue on submission stream...")
