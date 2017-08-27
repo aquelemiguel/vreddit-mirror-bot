@@ -24,16 +24,7 @@ reddit = praw.Reddit(
 )
 gfycat = GfycatClient()
 
-cached_submissions = []
-
-# TODO: Open a thread for every link.
-def cached_links_handler():
-    while True:
-        for i, submission in enumerate(cached_submissions):
-            print("Handling: " + submission.url)
-            if upload_to_gfycat(submission) == 'remove':
-                cached_submissions.remove(submission)
-            time.sleep(10)
+semaphore = threading.Semaphore() # For .ini file synchronization.
 
 # Increment 'conversions' stat in .ini file.
 def update_conversions_ini():
@@ -43,24 +34,36 @@ def update_conversions_ini():
 
 def reply_to_submission(submission, gif_json):
 
-    # TODO: Find a better place for this mess.
-    line1 = "This post appears to be using Reddit's own video player.  \n"
-    line2 = "If your current device does not support v.redd.it, try these mirrors hosted over at Gfycat!  \n\n"
-    line3 = "* [**WEBM** (" + str(round(int(gif_json['gfyItem']['webmSize'])/1000000, 2)) + " MB)](" + gif_json['gfyItem']['webmUrl'] + ")  \n\n* [**MP4** (" + str(round(int(gif_json['gfyItem']['mp4Size'])/1000000, 2))  + " MB)](" + gif_json['gfyItem']['mp4Url'] + ")  \n\n***\n"
-    line4 = "^(^I'm ^a ^beep-boop ^made ^by ^/u/blinkroot. ^So ^far, ^I've ^converted ^**" + config.get('stats', 'conversions') + "** ^videos!) [^^github. ](https://github.com/aquelemiguel) [^^support ^^me. ^^♥️](https://www.paypal.me/aquelemiguel/)"
+    def gfy_field(prop):
+        return gif_json['gfyItem'][prop]
 
+    try:
+        webm_size = str(round(int(gfy_field('webmSize'))/1000000, 2))
+        mp4_size = str(round(int(gfy_field('mp4Size'))/1000000, 2))
+        webm_url = gfy_field('webmUrl')
+        mp4_url = gfy_field('mp4Url')
+        num_of_conversions = config.get('stats', 'conversions')
+    except KeyError:
+        print("Key error...")
+        return
+
+    reply = f"""This post appears to be using Reddit's native video player.  \n
+If your current device does not support v.redd.it, try one of these mirrors hosted over at Gfycat!  \n
+* [**WEBM** ({webm_size} MB)]({webm_url})  \n\n* [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
+^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^conversions ^so ^far!)
+[^^[Github] ](https://github.com/aquelemiguel)
+[^^[Banned ^^subs] ](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)
+[^^[Support ^^me ^^♥️]](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+"""
     while True:
         try:
-            submission.reply(line1 + line2 + line3 + line4)
+            submission.reply(reply)
             print("Upload complete!\n")
             break
         except praw.exceptions.APIException as e:
             print("Hit rate limit: " + e.message)
             time.sleep(30)
-            continue
-
-        # Probably banned from this subreddit.
-        except prawcore.exceptions.Forbidden as e:
+        except prawcore.exceptions.Forbidden as e: # Probably got banned while converting the video.
             print("Wasn't able to comment on: " + submission.url)
             break
 
@@ -70,49 +73,44 @@ def upload_to_gfycat(submission):
     try:
         urllib.request.urlretrieve(media_url, "cached/" + submission.id + ".mp4")
     except urllib.error.HTTPError:
-        print("URL retrieval forbidden, retrying...")
-        return 'retry'
+        print("Post deleted!") # Probably the post was deleted.
+        return
 
-    try:
-        id = gfycat.upload_from_file("cached/" + submission.id + ".mp4")['gfyname']
-    except GfycatClientError:
-        print("Upload error, sending back to cache.")
-        return 'retry'
-    except KeyError:
-        print("Key error!")
-        return 'retry'
-
-    gif_json = {}
-
-    # Ensures the video has already been uploaded.
     while True:
-        gif_json = gfycat.query_gfy(id)
-        if not gif_json == None:
+        try:
+            id = gfycat.upload_from_file("cached/" + submission.id + ".mp4")['gfyname']
+            gif_json = gfycat.query_gfy(id)
             break
+        except GfycatClientError:
+            print("Upload error, sending back to cache.")
+        except KeyError:
+            print("Key error!")
 
-        print("Upload still isn't complete.")
-        time.sleep(5)
-
+    semaphore.acquire()
     update_conversions_ini()
+    semaphore.release()
 
     reply_to_submission(submission, gif_json)
     os.remove("cached/" + submission.id + ".mp4")
 
-    return 'remove'
-
-t1 = threading.Thread(target=cached_links_handler)
-t1.start()
+    return
 
 try:
-    stream = reddit.subreddit('all').stream.submissions()
-except prawcore.exceptions.ServerError:
-    print("Temporary issue extracting new submissions...")
+    for submission in reddit.subreddit('all').stream.submissions():
+        try:
+            if submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif']:
 
-for submission in stream:
-    try:
-        if submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif']:
-            print("Match found: " + submission.url)
-            cached_submissions.append(submission)
-    except TypeError:
-        print("This submission is NoneType. Dodging...")
-        continue
+                # Checks whether bot is banned from this subreddit.
+                if submission.subreddit.user_is_banned:
+                    print("Bot is banned from " + str(submission.subreddit) + ".")
+                    continue
+
+                print("Match found: " + submission.url)
+                token = threading.Thread(target=upload_to_gfycat, args=(submission,))
+                token.start()
+
+        except TypeError:
+            print("This submission is NoneType. Dodging...")
+            continue
+except prawcore.exceptions.ServerError:
+    print("Issue on submission stream...")
