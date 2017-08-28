@@ -58,7 +58,7 @@ def reply_to_submission(submission, gif_json, is_gif):
             print("Key error...")
             return
 
-        reply = f"""This post appears to be using Reddit's native video player.
+        reply = f"""This post appears to be using Reddit's native video player.\x20\x20
 If your current device does not support v.redd.it, try one of these mirrors hosted over at **Gfycat**!  \n
 * [**WEBM** ({webm_size} MB)]({webm_url})  \n\n* [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
 ^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^conversions ^so ^far!)
@@ -78,7 +78,7 @@ If your current device does not support v.redd.it, try one of these mirrors host
             print("Key error...")
             return
 
-        reply = f"""This post appears to be using Reddit's native video player.
+        reply = f"""This post appears to be using Reddit's native video player.\x20\x20
 If your current device does not support v.redd.it, try this mirror hosted over at **Streamable**!  \n
 * [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
 ^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^conversions ^so ^far!)
@@ -98,6 +98,7 @@ If your current device does not support v.redd.it, try this mirror hosted over a
         except prawcore.exceptions.Forbidden as e: # Probably got banned while converting the video.
             print("Wasn't able to comment on: " + submission.url)
             break
+    return
 
 def upload_to_streamable(submission):
     media_url = submission.media['reddit_video']['fallback_url']
@@ -143,8 +144,9 @@ def upload_to_streamable(submission):
     semaphore.release()
 
     reply_to_submission(submission, gif_json, False)
-    #os.remove(mp4_path)
-    #os.remove(mp3_path)
+
+    os.remove(mp4_path)
+    os.remove(mp3_path)
     #os.remove(output_path)
 
     return
