@@ -1,5 +1,5 @@
 # vreddit-mirror-bot
-This bot mirrors videos hosted on Reddit's native player (v.redd.it) to Gfycat and Streamable, Reddit-friendly platforms.  
+This bot mirrors videos hosted on Reddit's native player (v.redd.it) to Gfycat and Streamable.  
 See it in action over at [/u/vredditmirrorbot](https://www.reddit.com/u/vredditmirrorbot).
 
 ## More information
