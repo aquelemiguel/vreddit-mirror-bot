@@ -13,9 +13,8 @@ import ffmpy
 from gfycat.client import GfycatClient
 from gfycat.error import GfycatClientError
 
-# ConfigParser setup.
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read('config.ini') # File isn't available on GitHub, for obvious reasons.
 
 username = config.get('reddit', 'username')
 password = config.get('reddit', 'password')
@@ -23,15 +22,15 @@ password = config.get('reddit', 'password')
 reddit = praw.Reddit(
     client_id=config.get('reddit', 'client_id'),
     client_secret=config.get('reddit', 'client_secret'),
-    username=config.get('reddit', 'username'),
-    password=config.get('reddit', 'password'),
+    username=username,
+    password=password,
     user_agent='vredditmirrorbot by /u/blinkroot'
 )
 gfycat = GfycatClient()
 
 semaphore = threading.Semaphore() # For .ini file synchronization.
 
-# Increment 'conversions' stat in .ini file.
+# Increments 'conversions' stat in .ini file.
 def update_conversions_ini():
     config.set('stats', 'conversions', str(int(config.get('stats', 'conversions')) + 1))
     with open('config.ini', 'w') as config_file:
@@ -58,33 +57,35 @@ def reply_to_submission(submission, gif_json, is_gif):
             print("Key error...")
             return
 
-        reply = f"""This post appears to be using Reddit's native video player.\x20\x20
-If your current device does not support v.redd.it, try one of these mirrors hosted over at **Gfycat**!  \n
+        # Thank you @tag-them for introducing me to f-strings.
+
+        reply = f"""This submission is using **v.redd.it**, Reddit's native video player.\x20\x20
+If your device isn't supported or the quality's subpar, try these mirrors hosted over at **Gfycat**!  \n
 * [**WEBM** ({webm_size} MB)]({webm_url})  \n\n* [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^conversions ^so ^far!)
+^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^mirrors ^so ^far! ^|)
 [^^Github ](https://github.com/aquelemiguel)^^|
+[^^Send ^^feedback ](https://www.reddit.com/message/compose?to=/u/blinkroot)^^|
 [^^Banned ^^subs ](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^Support ^^me ^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+[^^♥️ ^^Support ^^me ^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     if not is_gif:
         try:
             mp4_size = str(round(int(strmbl_field('mp4', 'size'))/1000000, 2))
             mp4_url = "https://www." + gif_json['url']
-            #mobile_size = str(round(int(strmbl_field('mp4-mobile', 'size'))/1000000, 2))
-            #mobile_url = strmbl_field('mp4-mobile', 'url')
             num_of_conversions = config.get('stats', 'conversions')
         except KeyError:
             print("Key error...")
             return
 
-        reply = f"""This post appears to be using Reddit's native video player.\x20\x20
-If your current device does not support v.redd.it, try this mirror hosted over at **Streamable**!  \n
+        reply = f"""This submission is using **v.redd.it**, Reddit's native video player.\x20\x20
+If your device isn't supported or the quality's subpar, try this mirror hosted over at **Streamable**!  \n
 * [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^conversions ^so ^far!)
+^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^mirrors ^so ^far! ^|)
 [^^Github ](https://github.com/aquelemiguel)^^|
+[^^Send ^^feedback ](https://www.reddit.com/message/compose?to=/u/blinkroot)^^|
 [^^Banned ^^subs ](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^Support ^^me ^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+[^^♥️ ^^Support ^^me ^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     while True:
@@ -92,7 +93,7 @@ If your current device does not support v.redd.it, try this mirror hosted over a
             submission.reply(reply)
             print("Upload complete!\n")
             break
-        except praw.exceptions.APIException as e:
+        except praw.exceptions.APIException as e: # Hit Reddit's submission limit.
             print("Hit rate limit: " + e.message)
             time.sleep(30)
         except prawcore.exceptions.Forbidden as e: # Probably got banned while converting the video.
@@ -111,7 +112,7 @@ def upload_to_streamable(submission):
         try:
             urllib.request.urlretrieve(media_url, mp4_path)
             urllib.request.urlretrieve(media_url[:media_url.find('/', 18)] + "/audio", mp3_path)
-        except urllib.error.HTTPError: # Probably a 'muted sound' video.
+        except urllib.error.HTTPError: # A 'muted sound' video.
             print("Muted sound video found...")
             thread = threading.Thread(target=upload_to_gfycat, args=(submission,))
             thread.start()
@@ -145,9 +146,12 @@ def upload_to_streamable(submission):
 
     reply_to_submission(submission, gif_json, False)
 
-    os.remove(mp4_path)
-    os.remove(mp3_path)
-    #os.remove(output_path)
+    try:
+        os.remove(mp4_path)
+        os.remove(mp3_path)
+        #os.remove(output_path)
+    except FileNotFoundError: # If this gets caught, I deleted the file.
+        pass
 
     return
 
@@ -175,7 +179,11 @@ def upload_to_gfycat(submission):
     semaphore.release()
 
     reply_to_submission(submission, gif_json, True)
-    os.remove("cached/" + submission.id + ".mp4")
+
+    try:
+        os.remove("cached/" + submission.id + ".mp4")
+    except FileNotFoundError: # If this gets caught, I deleted the file.
+        pass
 
     return
 
@@ -183,14 +191,18 @@ while True:
     try:
         for submission in reddit.subreddit('all').stream.submissions():
             try:
+                # If user is banned from the sub, skip it.
+                if submission.subreddit.user_is_banned:
+                    continue
+
                 # Handles video submissions.
-                if submission.domain == 'v.redd.it' and not submission.media['reddit_video']['is_gif'] and not submission.subreddit.user_is_banned:
+                elif submission.domain == 'v.redd.it' and not submission.media['reddit_video']['is_gif']:
                     print("Video match found: " + submission.url)
                     thread = threading.Thread(target=upload_to_streamable, args=(submission,))
                     thread.start()
 
                 # Handles .gif submissions.
-                elif submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif'] and not submission.subreddit.user_is_banned:
+                elif submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif']:
                     print("Gif match found: " + submission.url)
                     thread = threading.Thread(target=upload_to_gfycat, args=(submission,))
                     thread.start()
@@ -200,3 +212,5 @@ while True:
                 continue
     except prawcore.exceptions.ServerError:
         print("Issue on submission stream...")
+    except prawcore.exceptions.RequestException:
+        print("Reddit might be down...")
