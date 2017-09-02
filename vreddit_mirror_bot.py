@@ -62,11 +62,7 @@ def reply_to_submission(submission, gif_json, is_gif):
         reply = f"""This submission is using **v.redd.it**, Reddit's native video player.\x20\x20
 If your device isn't supported or the quality's subpar, try these mirrors hosted over at **Gfycat**!  \n
 * [**WEBM** ({webm_size} MB)]({webm_url})  \n\n* [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^mirrors ^so ^far! ^|)
-[^^Github ](https://github.com/aquelemiguel)^^|
-[^^Send ^^feedback ](https://www.reddit.com/message/compose?to=/u/blinkroot)^^|
-[^^Banned ^^subs ](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^♥️ ^^Support ^^me ^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+^^I'm&#32;a&#32;beep-boop.&#32;**{num_of_conversions}**&#32;mirrors&#32;so&#32;far!&#32;|&#32;[Github](https://github.com/aquelemiguel)&#32;|&#32;[Send&#32;feedback](https://www.reddit.com/message/compose?to=blinkroot)&#32;|&#32;[Banned&#32;subs](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)&#32;|&#32;[♥️&#32;Support&#32;me&#32;♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     if not is_gif:
@@ -81,11 +77,7 @@ If your device isn't supported or the quality's subpar, try these mirrors hosted
         reply = f"""This submission is using **v.redd.it**, Reddit's native video player.\x20\x20
 If your device isn't supported or the quality's subpar, try this mirror hosted over at **Streamable**!  \n
 * [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^mirrors ^so ^far! ^|)
-[^^Github ](https://github.com/aquelemiguel)^^|
-[^^Send ^^feedback ](https://www.reddit.com/message/compose?to=/u/blinkroot)^^|
-[^^Banned ^^subs ](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^♥️ ^^Support ^^me ^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+^^I'm&#32;a&#32;beep-boop.&#32;**{num_of_conversions}**&#32;mirrors&#32;so&#32;far!&#32;|&#32;[Github](https://github.com/aquelemiguel)&#32;|&#32;[Send&#32;feedback](https://www.reddit.com/message/compose?to=blinkroot)&#32;|&#32;[Banned&#32;subs](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)&#32;|&#32;[♥️&#32;Support&#32;me&#32;♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     while True:
