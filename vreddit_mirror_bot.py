@@ -61,12 +61,13 @@ def reply_to_submission(submission, gif_json, is_gif):
 
         reply = f"""This submission is using **v.redd.it**, Reddit's native video player.\x20\x20
 If your device isn't supported or the quality's subpar, try these mirrors hosted over at **Gfycat**!  \n
-* [**WEBM** ({webm_size} MB)]({webm_url})  \n\n* [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^mirrors ^so ^far! ^|)
-[^^Github ](https://github.com/aquelemiguel)^^|
-[^^Send ^^feedback ](https://www.reddit.com/message/compose?to=/u/blinkroot)^^|
-[^^Banned ^^subs ](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^♥️ ^^Support ^^me ^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+* [**WEBM** ({webm_size} MB, Android)]({webm_url})  \n\n* [**MP4** ({mp4_size} MB, iPhone)]({mp4_url})  \n\n***
+^(^I'm\x20^a\x20^beep-boop.\x20^**{num_of_conversions}**\x20^mirrors\x20^so\x20^far!\x20^|)
+[^^Github\x20](https://github.com/aquelemiguel)^^|
+[^^FAQ\x20](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ)^^|
+[^^Send\x20^^feedback\x20](https://www.reddit.com/message/compose?to=blinkroot)^^|
+[^^Banned\x20^^subs\x20](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
+[^^♥️\x20^^Support\x20^^me\x20^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     if not is_gif:
@@ -81,11 +82,12 @@ If your device isn't supported or the quality's subpar, try these mirrors hosted
         reply = f"""This submission is using **v.redd.it**, Reddit's native video player.\x20\x20
 If your device isn't supported or the quality's subpar, try this mirror hosted over at **Streamable**!  \n
 * [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^(^I'm ^a ^beep-boop. ^**{num_of_conversions}** ^mirrors ^so ^far! ^|)
-[^^Github ](https://github.com/aquelemiguel)^^|
-[^^Send ^^feedback ](https://www.reddit.com/message/compose?to=/u/blinkroot)^^|
-[^^Banned ^^subs ](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^♥️ ^^Support ^^me ^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+^(^I'm\x20^a\x20^beep-boop.\x20^**{num_of_conversions}**\x20^mirrors\x20^so\x20^far!\x20^|)
+[^^Github\x20](https://github.com/aquelemiguel)^^|
+[^^FAQ\x20](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ)^^|
+[^^Send\x20^^feedback\x20](https://www.reddit.com/message/compose?to=blinkroot)^^|
+[^^Banned\x20^^subs\x20](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
+[^^♥️\x20^^Support\x20^^me\x20^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     while True:
@@ -214,3 +216,5 @@ while True:
         print("Issue on submission stream...")
     except prawcore.exceptions.RequestException:
         print("Reddit might be down...")
+    except prawcore.exceptions.Forbidden:
+        print("Forbidden!")
