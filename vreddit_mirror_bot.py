@@ -1,4 +1,5 @@
 import os
+import html
 import time
 import configparser
 import sys
@@ -28,7 +29,8 @@ reddit = praw.Reddit(
 )
 gfycat = GfycatClient()
 
-semaphore = threading.Semaphore() # For .ini file synchronization.
+ini_semaphore = threading.Semaphore() # For .ini file synchronization.
+log_semaphore = threading.Semaphore() # For .log file synchronization.
 
 # Increments 'conversions' stat in .ini file.
 def update_conversions_ini():
@@ -41,10 +43,8 @@ def reply_to_submission(submission, gif_json, is_gif):
     def gfy_field(prop):
         return gif_json['gfyItem'][prop]
 
-    def strmbl_field(extension, prop):
-        return gif_json['files'][extension][prop]
-
     reply = ""
+    s = html.unescape('&#32;')
 
     if is_gif:
         try:
@@ -55,45 +55,44 @@ def reply_to_submission(submission, gif_json, is_gif):
             num_of_conversions = config.get('stats', 'conversions')
         except KeyError:
             print("Key error...")
+            log_url(submission.url, 3)
             return
 
-        # Thank you @tag-them for introducing me to f-strings.
-
-        reply = f"""This submission is using **v.redd.it**, Reddit's native video player.\x20\x20
+        reply = f"""This post's using **v.redd.it**, Reddit's native video player.{s}{s}
 If your device isn't supported or the quality's subpar, try these mirrors hosted over at **Gfycat**!  \n
-* [**WEBM** ({webm_size} MB, Android)]({webm_url})  \n\n* [**MP4** ({mp4_size} MB, iPhone)]({mp4_url})  \n\n***
-^(^I'm\x20^a\x20^beep-boop.\x20^**{num_of_conversions}**\x20^mirrors\x20^so\x20^far!\x20^|)
-[^^Github\x20](https://github.com/aquelemiguel)^^|
-[^^FAQ\x20](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ)^^|
-[^^Send\x20^^feedback\x20](https://www.reddit.com/message/compose?to=blinkroot)^^|
-[^^Banned\x20^^subs\x20](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^♥️\x20^^Support\x20^^me\x20^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+* [**WEBM** ({webm_size} MB, Android)]({webm_url})  \n\n* [**MP4** ({mp4_size} MB, iOS)]({mp4_url})  \n\n***
+^(^I'm{s}^a{s}^beep-boop.{s}^**{num_of_conversions}**{s}^mirrors{s}^so{s}^far!{s}^|)
+[^^source{s}](https://github.com/aquelemiguel)^^|
+[^^faq{s}](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ)^^|
+[^^feedback{s}](https://www.reddit.com/message/compose?to=blinkroot)^^|
+[^^banned{s}^^subs{s}](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
+[^^support{s}^^me{s}^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
-
     if not is_gif:
         try:
-            mp4_size = str(round(int(strmbl_field('mp4', 'size'))/1000000, 2))
+            mp4_size = str(round(os.stat("cached/" + gif_json['title']).st_size /1000000, 2))
             mp4_url = "https://www." + gif_json['url']
             num_of_conversions = config.get('stats', 'conversions')
         except KeyError:
             print("Key error...")
-            return
+            log_url(submission.url, 3)
 
-        reply = f"""This submission is using **v.redd.it**, Reddit's native video player.\x20\x20
+        reply = f"""This post's using **v.redd.it**, Reddit's native video player.{s}{s}
 If your device isn't supported or the quality's subpar, try this mirror hosted over at **Streamable**!  \n
 * [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^(^I'm\x20^a\x20^beep-boop.\x20^**{num_of_conversions}**\x20^mirrors\x20^so\x20^far!\x20^|)
-[^^Github\x20](https://github.com/aquelemiguel)^^|
-[^^FAQ\x20](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ)^^|
-[^^Send\x20^^feedback\x20](https://www.reddit.com/message/compose?to=blinkroot)^^|
-[^^Banned\x20^^subs\x20](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^♥️\x20^^Support\x20^^me\x20^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+^(^I'm{s}^a{s}^beep-boop.{s}^**{num_of_conversions}**{s}^mirrors{s}^so{s}^far!{s}^|)
+[^^source{s}](https://github.com/aquelemiguel)^^|
+[^^faq{s}](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ)^^|
+[^^feedback{s}](https://www.reddit.com/message/compose?to=blinkroot)^^|
+[^^banned{s}^^subs{s}](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
+[^^support{s}^^me{s}^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     while True:
         try:
             submission.reply(reply)
             print("Upload complete!\n")
+            log_url(submission.url, 4)
             break
         except praw.exceptions.APIException as e: # Hit Reddit's submission limit.
             print("Hit rate limit: " + e.message)
@@ -142,9 +141,9 @@ def upload_to_streamable(submission):
         gif_json = json.loads(requests.get('https://api.streamable.com/videos/' + short_code).text)
         break
 
-    semaphore.acquire()
+    ini_semaphore.acquire()
     update_conversions_ini()
-    semaphore.release()
+    ini_semaphore.release()
 
     reply_to_submission(submission, gif_json, False)
 
@@ -173,12 +172,14 @@ def upload_to_gfycat(submission):
             break
         except GfycatClientError:
             print("Upload error, sending back to cache.")
+            log_url(submission.url, 2)
         except KeyError:
             print("Key error!")
+            log_url(submission.url, 3)
 
-    semaphore.acquire()
+    ini_semaphore.acquire()
     update_conversions_ini()
-    semaphore.release()
+    ini_semaphore.release()
 
     reply_to_submission(submission, gif_json, True)
 
@@ -188,6 +189,23 @@ def upload_to_gfycat(submission):
         pass
 
     return
+
+def log_url(url, status):
+    log_semaphore.acquire()
+
+    with open("log.txt", "a") as log_file:
+
+        if status == 1: # Found status.
+            log_file.write("Found: " + url + "\n")
+        elif status == 2: # Upload error.
+            log_file.write("Upload error: " + url + "\n")
+        elif status == 3: # Key error.
+            log_file.write("Key error: " + url + "\n")
+        elif status == 4: # Success status.
+            log_file.write("Success: " + url + "\n")
+
+    log_semaphore.release()
+
 
 while True:
     try:
@@ -200,17 +218,22 @@ while True:
                 # Handles video submissions.
                 elif submission.domain == 'v.redd.it' and not submission.media['reddit_video']['is_gif']:
                     print("Video match found: " + submission.url)
+                    log_url(submission.url, 1)
                     thread = threading.Thread(target=upload_to_streamable, args=(submission,))
                     thread.start()
 
                 # Handles .gif submissions.
                 elif submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif']:
                     print("Gif match found: " + submission.url)
+                    log_url(submission.url, 1)
                     thread = threading.Thread(target=upload_to_gfycat, args=(submission,))
                     thread.start()
 
             except TypeError:
                 print("This submission is NoneType. Dodging...")
+                continue
+            except prawcore.exceptions.NotFound:
+                print("Submission not found.")
                 continue
     except prawcore.exceptions.ServerError:
         print("Issue on submission stream...")
