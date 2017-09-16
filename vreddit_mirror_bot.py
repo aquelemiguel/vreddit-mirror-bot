@@ -1,5 +1,4 @@
 import os
-import html
 import time
 import configparser
 import sys
@@ -43,8 +42,11 @@ def reply_to_submission(submission, gif_json, is_gif):
     def gfy_field(prop):
         return gif_json['gfyItem'][prop]
 
+    def strmbl_field(extension, prop):
+        return gif_json['files'][extension][prop]
+
     reply = ""
-    s = html.unescape('&#32;')
+    s = '&#32;'
 
     if is_gif:
         try:
@@ -58,34 +60,25 @@ def reply_to_submission(submission, gif_json, is_gif):
             log_url(submission.url, 3)
             return
 
-        reply = f"""This post's using **v.redd.it**, Reddit's native video player.{s}{s}
-If your device isn't supported or the quality's subpar, try these mirrors hosted over at **Gfycat**!  \n
-* [**WEBM** ({webm_size} MB, Android)]({webm_url})  \n\n* [**MP4** ({mp4_size} MB, iOS)]({mp4_url})  \n\n***
-^(^I'm{s}^a{s}^beep-boop.{s}^**{num_of_conversions}**{s}^mirrors{s}^so{s}^far!{s}^|)
-[^^source{s}](https://github.com/aquelemiguel)^^|
-[^^faq{s}](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ)^^|
-[^^feedback{s}](https://www.reddit.com/message/compose?to=blinkroot)^^|
-[^^banned{s}^^subs{s}](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^support{s}^^me{s}^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+        reply = f"""This post's using **v.redd.it**, Reddit's native video player.{s}{s}\x20\x20
+If your device isn't supported or the quality's subpar, try these mirrors hosted over at **Gfycat!**  \n
+* [**WEBM** ({webm_size} MB, Android)]({webm_url})\n* [**MP4** ({mp4_size} MB, iOS)]({mp4_url})  \n\n***
+^^I'm{s}a{s}beep-boop.{s}**{num_of_conversions}**{s}mirrors{s}so{s}far!{s}|{s}[source](https://github.com/aquelemiguel){s}|{s}[faq](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ){s}|{s}[feedback](https://www.reddit.com/message/compose?to=blinkroot){s}|{s}[banned{s}subs](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits){s}|{s}[support{s}me{s}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
     if not is_gif:
         try:
-            mp4_size = str(round(os.stat("cached/" + gif_json['title']).st_size /1000000, 2))
-            mp4_url = "https://www." + gif_json['url']
+            #mp4_size = str(round(os.stat("cached/" + gif_json['title']).st_size /1000000, 2))
+            mp4_size = str(round(int(strmbl_field('mp4', 'size'))/1000000, 2))
+            mp4_url = "https://" + gif_json['url']
             num_of_conversions = config.get('stats', 'conversions')
         except KeyError:
             print("Key error...")
             log_url(submission.url, 3)
 
-        reply = f"""This post's using **v.redd.it**, Reddit's native video player.{s}{s}
-If your device isn't supported or the quality's subpar, try this mirror hosted over at **Streamable**!  \n
+        reply = f"""This post's using **v.redd.it**, Reddit's native video player.\x20\x20
+If your device isn't supported or the quality's subpar, try this mirror hosted over at **Streamable!**  \n
 * [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^(^I'm{s}^a{s}^beep-boop.{s}^**{num_of_conversions}**{s}^mirrors{s}^so{s}^far!{s}^|)
-[^^source{s}](https://github.com/aquelemiguel)^^|
-[^^faq{s}](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ)^^|
-[^^feedback{s}](https://www.reddit.com/message/compose?to=blinkroot)^^|
-[^^banned{s}^^subs{s}](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits)^^|
-[^^support{s}^^me{s}^^♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+^^I'm{s}a{s}beep-boop.{s}**{num_of_conversions}**{s}mirrors{s}so{s}far!{s}|{s}[source](https://github.com/aquelemiguel){s}|{s}[faq](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ){s}|{s}[feedback](https://www.reddit.com/message/compose?to=blinkroot){s}|{s}[banned{s}subs](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Banned-subreddits){s}|{s}[support{s}me{s}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     while True:
