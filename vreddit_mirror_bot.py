@@ -40,7 +40,7 @@ def reply_to_submission(submission, gif_json, root, is_gif):
         return gif_json['files'][extension][prop]
 
     reply = ""
-    s = '&#32;'
+    space = '&#32;'
 
     if is_gif:
         try:
@@ -53,9 +53,9 @@ def reply_to_submission(submission, gif_json, root, is_gif):
             log_url(submission.url, 3)
             return
 
-        reply = f"""Issues with **v.redd.it**? Try these **Gfycat** mirrors!{s}^^[Why?](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ){s}{s}\n
+        reply = f"""Issues with **v.redd.it**? Try these **Gfycat** mirrors!{space}^^[Why?](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ){space}{space}\n
 * [**WEBM** ({webm_size} MB, Android)]({webm_url})\n* [**MP4** ({mp4_size} MB, iOS)]({mp4_url})  \n\n***
-^^vredditmirrorbot{s}|{s}[Wiki](https://github.com/aquelemiguel){s}|{s}[♥️{s}Support{s}me{s}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+^^vredditmirrorbot{space}|{space}[Wiki](https://github.com/aquelemiguel){space}|{space}[♥️{space}Support{space}me{space}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
     if not is_gif:
         try:
@@ -66,9 +66,9 @@ def reply_to_submission(submission, gif_json, root, is_gif):
             print("Key error...")
             log_url(submission.url, 3)
 
-        reply = f"""Issues with **v.redd.it**? Try this **Streamable** mirror!{s}^^[Why?](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ){s}{s}\n
+        reply = f"""Issues with **v.redd.it**? Try this **Streamable** mirror!{space}^^[Why?](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ){space}{space}\n
 * [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^^vredditmirrorbot{s}|{s}[Wiki](https://github.com/aquelemiguel){s}|{s}[♥️{s}Support{s}me{s}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+^^vredditmirrorbot{space}|{space}[Wiki](https://github.com/aquelemiguel){space}|{space}[♥️{space}Support{space}me{space}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     while True:
