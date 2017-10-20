@@ -55,7 +55,7 @@ def reply_to_submission(submission, gif_json, root, is_gif):
 
         reply = f"""Issues with **v.redd.it**? Try these **Gfycat** mirrors!{s}^^[Why?](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ){s}{s}\n
 * [**WEBM** ({webm_size} MB, Android)]({webm_url})\n* [**MP4** ({mp4_size} MB, iOS)]({mp4_url})  \n\n***
-^^vredditmirrorbot{s}|{s}[Wiki](https://github.com/aquelemiguel){s}|{s}[♥️{s}Support{s}me{s}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+^^vredditmirrorbot{s}|{s}[Creator](https://github.com/aquelemiguel){s}|{s}[Keep{s}this{s}bot{s}alive{s}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
     if not is_gif:
         try:
@@ -68,7 +68,7 @@ def reply_to_submission(submission, gif_json, root, is_gif):
 
         reply = f"""Issues with **v.redd.it**? Try this **Streamable** mirror!{s}^^[Why?](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/FAQ){s}{s}\n
 * [**MP4** ({mp4_size} MB)]({mp4_url})  \n\n***
-^^vredditmirrorbot{s}|{s}[Wiki](https://github.com/aquelemiguel){s}|{s}[♥️{s}Support{s}me{s}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
+^^vredditmirrorbot{s}|{s}[Creator](https://github.com/aquelemiguel){s}|{s}[Keep{s}this{s}bot{s}alive{s}♥️](https://github.com/aquelemiguel/vreddit-mirror-bot/wiki/Donations)
 """
 
     while True:
@@ -98,7 +98,7 @@ def upload_to_streamable(submission, root):
             urllib.request.urlretrieve(media_url[:media_url.find('/', 18)] + "/audio", mp3_path)
         except urllib.error.HTTPError: # A 'muted sound' video.
             print("Muted sound video found...")
-            thread = threading.Thread(target=upload_to_gfycat, args=(submission,))
+            thread = threading.Thread(target=upload_to_gfycat, args=(submission, root,))
             thread.start()
             return
 
@@ -111,7 +111,7 @@ def upload_to_streamable(submission, root):
         files = [('file', open(output_path, 'rb'))]
         os.system('cls') # Clears all the FFMPEG verbose.
 
-        response = requests.post('https://api.streamable.com/upload', files=files, auth=(username, password))
+        response = requests.post('https://api.streamable.com/upload', files=files, auth=(username + '2', password))
         short_code = json.loads(response.text)['shortcode']
 
         response = requests.get('https://api.streamable.com/videos/' + short_code)
@@ -129,7 +129,6 @@ def upload_to_streamable(submission, root):
     try:
         os.remove(mp4_path)
         os.remove(mp3_path)
-        #os.remove(output_path)
     except FileNotFoundError: # If this gets caught, I deleted the file.
         pass
 
@@ -155,6 +154,8 @@ def upload_to_gfycat(submission, root):
         except KeyError:
             print("Key error!")
             log_url(submission.url, 3)
+        except requests.exceptions.ConnectionError:
+            pass
 
     reply_to_submission(submission, gif_json, root, True)
 
@@ -188,16 +189,14 @@ def parse_submission(submission, root):
             return
 
         # Handles video submissions.
-        elif submission.domain == 'v.redd.it' and not submission.media['reddit_video']['is_gif']:
+        elif submission.domain == 'v.redd.it' and not submission.media['reddit_video']['is_gif'] and not submission.over_18:
             print("Video match found: " + submission.url)
-            #log_url(submission.url, 1)
             thread = threading.Thread(target=upload_to_streamable, args=(submission, root,))
             thread.start()
 
         # Handles .gif submissions.
-        elif submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif']:
+        elif submission.domain == 'v.redd.it' and submission.media['reddit_video']['is_gif'] and not submission.over_18:
             print("Gif match found: " + submission.url)
-            #log_url(submission.url, 1)
             thread = threading.Thread(target=upload_to_gfycat, args=(submission, root,))
             thread.start()
 
@@ -210,10 +209,18 @@ def parse_submission(submission, root):
 
 def init_mention_stream():
     while True:
-        for mention in reddit.inbox.stream():
-            if "u/vredditmirrorbot" in mention.body:
-                print('{}\n{}\n'.format(mention.author, mention.body))
-                parse_submission(mention.submission, mention)
+        try:
+            for mention in reddit.inbox.stream():
+                if "u/vredditmirrorbot" in mention.body:
+                    print('{}\n{}\n'.format(mention.author, mention.body))
+                    mention.mark_read()
+                    parse_submission(mention.submission, mention)
+        except prawcore.exceptions.ServerError:
+            print("Issue on submission stream...")
+        except prawcore.exceptions.RequestException:
+            print("Reddit might be down...")
+        except prawcore.exceptions.Forbidden:
+            print("Forbidden!")
 
 def init_new_stream():
     while True:
